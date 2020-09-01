@@ -23,6 +23,8 @@ var (
 	workspaceDoesNotExistRegexp = regexp.MustCompile(`Workspace "(.+)" doesn't exist.`)
 
 	workspaceAlreadyExistsRegexp = regexp.MustCompile(`Workspace "(.+)" already exists`)
+
+	configInvalidErrRegexp = regexp.MustCompile(`There are some problems with the configuration, described below.`)
 )
 
 func parseError(err error, stderr string) error {
@@ -58,8 +60,19 @@ func parseError(err error, stderr string) error {
 		if len(submatches) == 2 {
 			return &ErrWorkspaceExists{submatches[1]}
 		}
+	case configInvalidErrRegexp.MatchString(stderr):
+		return &ErrConfigInvalid{stderr: stderr}
 	}
+
 	return errors.New(stderr)
+}
+
+type ErrConfigInvalid struct {
+	stderr string
+}
+
+func (e *ErrConfigInvalid) Error() string {
+	return "configuration is invalid"
 }
 
 type ErrNoSuitableBinary struct {
